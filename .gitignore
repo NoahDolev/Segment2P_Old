@@ -43,3 +43,6 @@ package-lock.json
 geckodriver.log
 
 *.p
+*.h5
+/TrainWeights
+

@@ -19,5 +19,5 @@ _And adapted for 2p calcium imaging. The main changes are_
 * Added processing of 2p movies into single frames for initial segmentation
 * Added code to extract signals from movies following segmentation by the network
 
-_For the trained network weights, contact: noah.dolev@weizmann.ac.il _
+_For the trained network weights, contact: noah.dolev@weizmann.ac.il_
 

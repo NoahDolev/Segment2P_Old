@@ -370,4 +370,3 @@ def createjson(imgpath = "/home/mestalbet/PythonScripts/Results_LiorImages/infer
                          'input_anchors':anchors.tolist()} #,'key':int(image_id)
             jline = json.dumps(json_data) + "\n"
             fp.write(jline)
-# developerKey="AIzaSyCmugrkm9rIUpn8AnAKxX8KaKZJU5Qjz6Q"

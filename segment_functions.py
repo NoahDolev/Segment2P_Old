@@ -82,7 +82,7 @@ plotly.offline.init_notebook_mode(connected=True)
 def cleanliorimage(alignedpath):
         rescale = MinMaxScaler(feature_range=(0, 1))
         pt = QuantileTransformer(output_distribution='normal')
-        img = io.imread(alignedpath)
+        img = skio.imread(alignedpath)
         img = pt.fit_transform(img)
         img = rescale.fit_transform(img)
         img = exposure.equalize_adapthist(img, clip_limit=0.05)
@@ -91,8 +91,8 @@ def cleanliorimage(alignedpath):
         imrescaled = util.invert(imrescaled)
         imrescaled = imrescaled*(255**2)
         imrescaled = imrescaled.astype('u2')
-        io.imsave(os.path.join('/'.join(alignedpath.split('/')[:-1]),\inference/\)+alignedpath.split('/')[-1], imrescaled)
-        return(imrescaled),
+        skio.imsave(os.path.join('/'.join(alignedpath.split('/')[:-1]),"inference/")+alignedpath.split('/')[-1], imrescaled)
+        return(imrescaled)
 
 def compute_iou(mask1, mask2):
         """
@@ -347,10 +347,10 @@ class ImageDataset(utils.Dataset):
             )
             
 def createjson(imgpath = "/home/mestalbet/PythonScripts/Results_LiorImages/inference/", 
-               json_output_path = "/home/mestalbet/bucket/PythonScripts/submit_data/inputs.json",
+               json_output_path = "gs://segproj/PythonScripts/submit_data/inputs.json",
                model_path = "/home/mestalbet/Segment2P/TrainWeights/mask_rcnn_cell_0100.h5",
                data_dir = "/home/mestalbet/PythonScripts/Results_LiorImages/inference/"):
-    predict_instance_json = json_output_path
+    predict_instance_json = "/home/mestalbet/temp/inputs.json"
     os.system("rm %s" % (predict_instance_json))
     config=CellInferenceConfig()
     model = modellib.MaskRCNN(mode="inference", config=config, model_dir=data_dir)
@@ -385,3 +385,4 @@ def createjson(imgpath = "/home/mestalbet/PythonScripts/Results_LiorImages/infer
                          'input_anchors':anchors.tolist()} #,'key':int(image_id)
             jline = json.dumps(json_data) + "\n"
             fp.write(jline)
+        os.system('gsutil -m cp "/home/mestalbet/temp/inputs.json" %s' % json_output_path)

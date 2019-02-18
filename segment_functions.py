@@ -79,6 +79,21 @@ import plotly.plotly as py
 import plotly.offline as offline
 plotly.offline.init_notebook_mode(connected=True)
 
+def cleanliorimage(alignedpath):
+        rescale = MinMaxScaler(feature_range=(0, 1))
+        pt = QuantileTransformer(output_distribution='normal')
+        img = io.imread(alignedpath)
+        img = pt.fit_transform(img)
+        img = rescale.fit_transform(img)
+        img = exposure.equalize_adapthist(img, clip_limit=0.05)
+        imrescaled = cv2.resize(img, dsize=(1024, 1024),
+                                interpolation=cv2.INTER_AREA)
+        imrescaled = util.invert(imrescaled)
+        imrescaled = imrescaled*(255**2)
+        imrescaled = imrescaled.astype('u2')
+        io.imsave(os.path.join('/'.join(alignedpath.split('/')[:-1]),\inference/\)+alignedpath.split('/')[-1], imrescaled)
+        return(imrescaled),
+
 def compute_iou(mask1, mask2):
         """
         Computes Intersection over Union score for two binary masks.

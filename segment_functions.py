@@ -33,7 +33,7 @@ from tensorflow.python.saved_model import signature_constants
 from tensorflow.python.saved_model import tag_constants
 import googleapiclient.discovery as discovery
 
-sys.path.insert(0, '/home/mestalbet/Segment2P/mrcnn')
+sys.path.insert(0, '/home/ec2-user/SageMaker/Segment2P/mrcnn')
 from mrcnn import model as modellib
 from mrcnn import utils
 from train import cellConfig

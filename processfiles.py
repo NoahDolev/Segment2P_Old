@@ -6,13 +6,16 @@ from math import floor
 
 import sagemaker
 from skimage import util 
+from scipy import ndimage as ndi
 from skimage.util import img_as_ubyte
 from skimage import exposure,color, img_as_int
 from skimage.io import imread as pngread
 from skimage.io import imsave as pngsave
 from skimage.segmentation import mark_boundaries
-from skimage.segmentation import mark_boundaries
+from skimage.segmentation import watershed
 from skimage import color
+from skimage.feature import peak_local_max
+from skimage.color import label2rgb
 import cv2
 from rolling_ball_filter import rolling_ball_filter
 import random
@@ -431,7 +434,6 @@ def cropimage(image, best_box = None):
     color = [0, 0, 0]
     roi = cv2.copyMakeBorder(roi, top, bottom, left, right, cv2.BORDER_CONSTANT,
     value=color)
-#     roi =  cv2.resize(roi, (256,256), interpolation = cv2.INTER_AREA)
     return(roi, best_box)
 
 def performcrop(key, bucket  = bucket, prefix = prefix ):
@@ -601,3 +603,29 @@ def merge_multiple_detections(masks):
     bin_mask = np.zeros(final_mask.shape)
     bin_mask[np.where(final_mask > 0)] = 255
     return(final_mask)
+
+def merge_two_masks(maskpaths):
+    masks = []
+    for mpath in maskpaths:
+        binarymask = pngread(mpath)
+        num_classes = 2
+        distance = ndi.distance_transform_edt(binarymask)
+        local_maxi = peak_local_max(distance, labels=binarymask, footprint=np.ones((3, 3)), indices=False)
+        markers = ndi.label(local_maxi)[0]
+        masks.append(watershed(-distance, markers, mask=binarymask))
+    mask = merge_multiple_detections(masks)
+    return(mask)
+
+def merge_masks(s3_object, model_ids,batchid = ''):
+    os.makedirs('/tmp/results/merge/merged/', exist_ok=True)
+    outpaths=[]
+    ismodelresult = any([m for m in model_ids if m in s3_object])
+    if ismodelresult:
+        for model_id in model_ids:
+            if not s3_object.endswith("/") and "masks" in s3_object:
+                    outpath = os.path.join('/tmp/results/'+batchid+'/merge/',model_id+'_'+s3_object.split('/')[-1])
+                    s3.meta.client.download_file('sagemaker-eu-west-1-102554356212', s3_object, outpath)
+                    outpaths.append(outpath)
+        if outpaths:            
+            mask = merge_two_masks(outpaths)
+            pngsave(os.path.join('/tmp/results/'+batchid+'/merge/merged/','merged_'+s3_object.split('/')[-1]), np.uint8(mask>0))
